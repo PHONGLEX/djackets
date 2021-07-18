@@ -1,0 +1,50 @@
+version: '3'
+
+services:
+  backend:
+    build:
+      context: ./django
+    command: ./scripts/start_prod.sh
+    networks:
+      - django-nginx
+    volumes:
+      - .:/code
+      - django-static:/django/static
+      - django-media:/django/media
+    depends_on:
+      - db
+    env_file:
+      - .env
+
+  db:
+    image: postgres
+    networks:
+      - django-nginx
+    env_file:
+      - ./.envs/.postgres
+
+  nginx:
+    build:
+      context: .
+      dockerfile: nginx/Dockerfile
+    ports:
+      - 80:80
+    networks:
+      - django-nginx
+    volumes:
+      - ./nginx/nginx-setup.conf:/etc/nginx/nginx.conf:ro
+      - django-static:/usr/src/app/static
+      - django-media:/usr/src/app/media
+    depends_on:
+      - backend
+
+
+volumes:
+  django-static:
+  django-media:
+
+networks:
+  django-nginx:
+    driver: bridge
+      
+
